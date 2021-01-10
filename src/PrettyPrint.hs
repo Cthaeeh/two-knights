@@ -23,3 +23,6 @@ pprintLine = foldl (\l r -> concat [pprintSquare r, " ", l]) ""
 
 pprintBoard :: Board -> String
 pprintBoard b = foldr (\l r -> concat [r, pprintLine l, "\n"]) "" (transpose (reverse b))
+
+pprintBoards :: [Board] -> String
+pprintBoards = foldr (\l r -> concat [r, pprintBoard l, "---------------\n"]) ""

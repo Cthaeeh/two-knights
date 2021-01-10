@@ -73,25 +73,34 @@ x = fst
 y :: (a, b) -> b
 y = snd
 
+isFull :: Square -> Bool
 isFull x = case x of
   Empty -> False
   x -> True
 
+-- TODO make this more readable / robust.
+-- Right now we implicitly assume diagonal or horizontal or vertical paths.
 -- You can not jump over your own pieces (except knights). 
 isCollision :: Board -> Move -> Bool
-isCollision board (to, from) = 
-    let path = zipWith (curry (at board)) [x from .. x to] [y from .. y to];
-    in any isFull (drop 1 (reverse (drop 1 path)))
+isCollision board move = 
+    let p = map (board `at`) (path move)
+    in any isFull (drop 1 (reverse (drop 1 p)))
+    
+-- TODO unreadable code
+path :: Move -> [Sqr]
+path(from, to) = 
+    let xVals = if x from == x to then repeat (x from) else if x from > x to then reverse [x to .. x from] else [x from .. x to];
+        yVals = if y from == y to then repeat (y from) else if y from > y to then reverse [y to .. y from] else [y from .. y to];
+    in zip xVals yVals 
     
 -- You can make not get your self checked. 
 isSuicide :: GameState -> Move -> Bool
-isSuicide state move = False
+isSuicide state move = False --TODO
 
 -- Pawns can only capture diagonally, Castling rules must be valid, En passant must be valid.
 isPieceSpecificIllegal :: GameState -> Move -> Bool
 isPieceSpecificIllegal state (from, to) = case b `pieceAt` from of 
-  Just (Piece White Pawn) -> isDiagonalMove (from, to) && b `at` to == Empty 
-  Just (Piece Black Pawn) -> isDiagonalMove (from, to) && b `at` to == Empty
+  Just (Piece _ Pawn) -> (isDiagonalMove (from, to) && b `at` to == Empty) || (isStraightMove (from, to) && isFull (b `at` to))
   _ -> False
   where b = board state
 
@@ -99,7 +108,13 @@ isPieceSpecificIllegal state (from, to) = case b `pieceAt` from of
 isDiagonalMove :: Move -> Bool
 isDiagonalMove move = abs (xDiff move) == abs (yDiff move)
 
+isStraightMove :: Move -> Bool
+isStraightMove move = xDiff move == 0 || yDiff move == 0
+
+xDiff :: Move -> Int
 xDiff (from, to) = x to - x from
+
+yDiff :: Move -> Int
 yDiff (from, to) = y to - y from
 
 --
@@ -107,16 +122,19 @@ outside :: Sqr -> Bool
 outside (x, y) = (0 > x) || (x > 7) || (0 > y) || (y > 7)
 
 -- Generally possible rook moves from a position.
-rookMoves (x, y) = zip [0 .. 7] (repeat x) ++ zip (repeat y) [0 .. 7]
+rookMoves :: Sqr  -> [Sqr]
+rookMoves (x, y) = zip (repeat x) [0 .. 7]  ++ zip [0 .. 7] (repeat y)
 
 -- Generally possible bishop moves from a position.
-bishopMoves (x, y) = zip [x .. 7][y .. 7] ++ zip [x .. 0][y .. 0] ++ zip [x .. 7][y .. 0] ++ zip [x .. 0][y .. 7]
+bishopMoves :: Sqr  -> [Sqr]
+bishopMoves (x, y) = zip [x .. 7][y .. 7] ++ zip (reverse [0 .. x]) (reverse [0 .. y]) ++ zip [x .. 7](reverse [0 .. y]) ++ zip (reverse [0 .. x])[y .. 7]
 
 -- Generally possible knight moves from a position.
 knightMoves (x, y) = [x | x <- [(x + 1, y + 2), (x + 1, y - 2), (x + 2, y + 1), (x + 2, y - 1), (x - 1, y + 2), (x - 1, y - 2), (x - 2, y + 1), (x - 2, y - 1)], not (outside x)]
 
 -- Generally possible queen moves from a position.
-queenMoves (a, b) = rookMoves (a, b) ++ bishopMoves (a, b)
+queenMoves :: Sqr  -> [Sqr]
+queenMoves (x, y) = rookMoves (x, y) ++ bishopMoves (x, y)
 
 -- Generally possible king moves from a position.
 kingMoves (a, b) = [x | x <- [(a -1, b -1), (a -1, b), (a -1, b + 1), (a, b -1), (a, b + 1), (a + 1, b -1), (a + 1, b), (a + 1, b + 1)], not (outside x)]
