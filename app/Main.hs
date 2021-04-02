@@ -8,7 +8,7 @@ import ChessData
       GameState(board, onMove),
       Move,
       Location )
-import Search ( makeAIMove )
+import Search ( makeAIMove, eval )
 import Data.Maybe ( isNothing )
 import MoveGen ( transformGameState, generateMoves )
 
@@ -62,7 +62,8 @@ detectWin s = Nothing --TODO
 playGame :: GameState -> IO Color
 playGame state = do
     gameState <- if onMove state == Black
-        then pure (makeAIMove state)
+        then do putStrLn ("AI eval: " ++ show (eval state) ++ ", positive values means white is better.")
+                pure (makeAIMove state)
         else makeHumanMove state
     case detectWin gameState of
         Nothing -> playGame gameState
