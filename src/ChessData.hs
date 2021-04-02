@@ -1,6 +1,6 @@
 module ChessData where 
 
-import Data.List
+import Data.List ( transpose )
 
 data Color = White | Black deriving (Show, Eq)
 data PType = Pawn | Knight | Bishop | Rook | Queen | King deriving (Show, Eq)
@@ -10,10 +10,21 @@ data Piece = Piece { color     :: Color ,
                    } deriving (Show, Eq)
 
 data Square = Empty | Full Piece deriving (Show, Eq)
-
-type Sqr = (Int, Int)
-type Move = (Sqr, Sqr) 
 type Board = [[Square]]
+
+type Location = (Int, Int)
+type Move = (Location, Location) 
+
+type EnPassantRights = Bool
+data CastlingRights = CastlingRights {whiteOO  :: Bool,
+                                      whiteOOO :: Bool,
+                                      blackOO  :: Bool,
+                                      blackOOO :: Bool} deriving (Show)
+
+data GameState = GameState {onMove          :: Color,
+                            board           :: Board,
+                            castlingRights  :: CastlingRights,
+                            enPassantRights :: EnPassantRights} deriving (Show)
 
 eM = Empty
 
@@ -41,19 +52,7 @@ defaultBoard = transpose (reverse [[bR,bN,bB,bQ,bK,bB,bN,bR],
                                    [wP,wP,wP,wP,wP,wP,wP,wP],
                                    [wR,wN,wB,wQ,wK,wB,wN,wR]])
 
-type EnPassantRights = Bool
-
-data CastlingRights = CastlingRights {whiteOO  :: Bool,
-                                      whiteOOO :: Bool,
-                                      blackOO  :: Bool,
-                                      blackOOO :: Bool} deriving (Show)
-
 defaultCastlingRights = CastlingRights False False False False
-
-data GameState = GameState {onMove          :: Color,
-                            board           :: Board,
-                            castlingRights  :: CastlingRights,
-                            enPassantRights :: EnPassantRights} deriving (Show)
 
 defaultGameState = GameState{onMove = White,
                              board = defaultBoard,

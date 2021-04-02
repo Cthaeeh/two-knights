@@ -15,6 +15,7 @@ prune :: Int -> Tree a -> Tree a
 prune 0 (Node x ts) = Node x []
 prune depth (Node x ts) = Node x (map (prune (depth - 1)) ts)
 
+-- TODO add piece square tables.
 staticEval :: Board -> Double
 staticEval b = sum (map squareValue (concat b))
 
@@ -43,9 +44,9 @@ minimise (Node n subTree) = minimum (map maximise subTree)
 
 staticEvalTree = fmap (staticEval .board)
 
+-- TODO also allow to play white. I think right now it will give bad moves for white.
 eval x = minimise $ staticEvalTree $ prune 3 $ gameTree x
 
--- TODO also allow to play black
 makeAIMove :: GameState -> GameState 
 makeAIMove gameState = case onMove gameState of
     White -> maximumBy (comparing eval) (generateMoves gameState)

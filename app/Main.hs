@@ -1,6 +1,5 @@
 module Main (main) where
 import PrettyPrint ( pprintBoard, pprintBoards)
-import Data.Foldable
 import Data.Char ( ord, digitToInt)
 import Control.Monad
 import ChessData
@@ -19,12 +18,12 @@ parseRank c
     | c `elem` ['1'..'8' ] = Just (digitToInt c - 1)
     | otherwise = Nothing
 
-parseSquare :: String -> Maybe Sqr
+parseSquare :: String -> Maybe Location
 parseSquare s = case length s of
-    2 -> liftM2 (,) (parseFile (s !! 0)) (parseRank (s !! 1))
+    2 -> liftM2 (,) (parseFile (head s)) (parseRank (s !! 1))
     _ -> Nothing
 
-getSquare :: IO Sqr
+getSquare :: IO Location
 getSquare = do
     putStr "Enter square, like e1:\n" 
     str <- getLine
