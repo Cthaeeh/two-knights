@@ -1,20 +1,25 @@
 module Main (main) where
 import PrettyPrint ( pprintBoard, pprintBoards)
 import Data.Char ( ord, digitToInt)
-import Control.Monad
+import Control.Monad ( liftM2 )
 import ChessData
-import Search
-import Data.Maybe
-import MoveGen
+    ( defaultGameState,
+      Color(Black),
+      GameState(board, onMove),
+      Move,
+      Location )
+import Search ( makeAIMove )
+import Data.Maybe ( isNothing )
+import MoveGen ( transformGameState )
 
-    
+
 parseFile :: Char -> Maybe Int
-parseFile c 
-    | c `elem` ['a'..'h' ] = Just (ord c - ord 'a') 
+parseFile c
+    | c `elem` ['a'..'h' ] = Just (ord c - ord 'a')
     | otherwise = Nothing
 
 parseRank :: Char -> Maybe Int
-parseRank c 
+parseRank c
     | c `elem` ['1'..'8' ] = Just (digitToInt c - 1)
     | otherwise = Nothing
 
@@ -23,19 +28,26 @@ parseSquare s = case length s of
     2 -> liftM2 (,) (parseFile (head s)) (parseRank (s !! 1))
     _ -> Nothing
 
-getSquare :: IO Location
-getSquare = do
-    putStr "Enter square, like e1:\n" 
+parseMove :: String -> Maybe Move
+parseMove s = case length s of
+    4 -> liftM2 (,) (parseSquare (take 2 s)) (parseSquare (drop 2 s))
+    _ -> Nothing
+
+getMove :: IO Move
+getMove = do
     str <- getLine
-    let sq = parseSquare str
-    maybe getSquare pure sq
+    let sq = parseMove str
+    maybe
+      (do putStrLn "invalid notation, try again"
+          getMove)
+      pure sq
+
 
 makeHumanMove :: GameState -> IO GameState
 makeHumanMove state = do
     putStr (pprintBoard (board state))
-    putStr "Enter move:\n" 
-    move <- liftM2 (,) getSquare getSquare
-    print move -- TODO check move legality
+    putStr "Enter move (in long algebraic notation, e.g. e2e4):\n"
+    move <- getMove -- TODO check move legality
     pure (transformGameState state move)
 
 detectWin :: GameState -> Maybe Color
@@ -50,9 +62,9 @@ playGame state = do
         Nothing -> playGame gameState
         Just color -> pure color
 
-main = do 
+main = do
     putStrLn "Let's play chesss, you get white!\n"
-    winner <- playGame defaultGameState 
+    winner <- playGame defaultGameState
     putStr $ show winner ++ "wins !\n"
 
 --e4 :: Sqr

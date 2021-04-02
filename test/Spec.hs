@@ -3,13 +3,13 @@ import MoveGen
 
 import ChessData
 
-e4 :: Sqr
+e4 :: Location 
 e4 = (4,3)
-e2 :: Sqr
+e2 :: Location 
 e2 = (4,1)
-e7 :: Sqr
+e7 :: Location 
 e7 = (4,6)
-e5 :: Sqr
+e5 :: Location 
 e5 = (4,4)
 
 testOne :: Test
