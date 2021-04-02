@@ -10,7 +10,7 @@ import ChessData
       Location )
 import Search ( makeAIMove )
 import Data.Maybe ( isNothing )
-import MoveGen ( transformGameState )
+import MoveGen ( transformGameState, generateMoves )
 
 
 parseFile :: Char -> Maybe Int
@@ -38,9 +38,12 @@ getMove = do
     str <- getLine
     let sq = parseMove str
     maybe
-      (do putStrLn "invalid notation, try again"
+      (do putStrLn "invalid notation, try again."
           getMove)
       pure sq
+
+isLegalMove :: GameState -> Move -> Bool
+isLegalMove state move = transformGameState state move `elem` generateMoves state
 
 
 makeHumanMove :: GameState -> IO GameState
@@ -48,7 +51,10 @@ makeHumanMove state = do
     putStr (pprintBoard (board state))
     putStr "Enter move (in long algebraic notation, e.g. e2e4):\n"
     move <- getMove -- TODO check move legality
-    pure (transformGameState state move)
+    if isLegalMove state move
+        then pure (transformGameState state move)
+        else do putStrLn "That is not a legal move, try again."
+                makeHumanMove state
 
 detectWin :: GameState -> Maybe Color
 detectWin s = Nothing --TODO

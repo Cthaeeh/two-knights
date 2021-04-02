@@ -19,12 +19,12 @@ type EnPassantRights = Bool
 data CastlingRights = CastlingRights {whiteOO  :: Bool,
                                       whiteOOO :: Bool,
                                       blackOO  :: Bool,
-                                      blackOOO :: Bool} deriving (Show)
+                                      blackOOO :: Bool} deriving (Show, Eq)
 
 data GameState = GameState {onMove          :: Color,
                             board           :: Board,
                             castlingRights  :: CastlingRights,
-                            enPassantRights :: EnPassantRights} deriving (Show)
+                            enPassantRights :: EnPassantRights} deriving (Show, Eq)
 
 eM = Empty
 
