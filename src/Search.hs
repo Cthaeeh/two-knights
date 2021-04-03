@@ -8,8 +8,12 @@ import StaticEval (staticEval)
 
 import Data.Ord
 
-eval :: GameState -> Double
-eval s = minimum $ approxMinDecreasin $ staticEvalTree $ prune 6 $ gameTree s
+-- I think we do some unecessary calculations in the first ply, think about it.
+eval :: GameState -> Int
+eval s = if onMove s == White
+    then maximum $ approxMaxImproving treeStatic
+    else minimum $ approxMinDecreasin treeStatic
+    where treeStatic = staticEvalTree $ prune 3 $ gameTree s
 
 makeAIMove :: GameState -> GameState
 makeAIMove gameState = case onMove gameState of
@@ -27,40 +31,54 @@ prune depth (Node x ts) = Node x (map (prune (depth - 1)) ts)
 
 staticEvalTree = fmap (staticEval . board)
 
-type ApproxUp = [Double]
-type ApproxDown = [Double]
+-- Make this strong types ?
+type ApproxUp = [Int]
+type ApproxDown = [Int]
 
 -- Alphabeta search
-approxMaxImproving :: Tree Double -> [Double]
+approxMaxImproving :: Tree Int -> [Int]
 -- Maximum of leaf is just its static value
 approxMaxImproving (Node n []) = [n]
 -- Maximum of node is maximized value of minimized sub nodes. 
 approxMaxImproving (Node n subTree) = approxMax (map approxMinDecreasin subTree)
 
-approxMinDecreasin :: Tree Double -> [Double]
+approxMinDecreasin :: Tree Int -> [Int]
 -- Minimum of leaf is just its static value
 approxMinDecreasin (Node n []) = [n]
 -- Minimum of node is minimized value of maximized sub nodes. 
 approxMinDecreasin (Node n subTree) = approxMin (map approxMaxImproving subTree)
 
 -- Efficient operator > for DownwardsApprox Value
-optimizedGreater :: Double -> ApproxDown -> Bool
-optimizedGreater val = foldr (\ first -> (||) (val > first)) False
+optimizedGreater :: ApproxDown -> Int -> Bool
+optimizedGreater [] val = False
+optimizedGreater (first : rest) val = (first <= val) || optimizedGreater rest val
 
-betterThan :: Double -> [ApproxDown] -> ApproxUp
+optimizedSmaller :: ApproxUp -> Int -> Bool
+optimizedSmaller [] val = False
+optimizedSmaller (first : rest) val = (first >= val) || optimizedSmaller rest val
+
+betterThan :: Int -> [ApproxDown] -> ApproxUp
 betterThan val [] = []
 betterThan val (first : rest) =
-    if optimizedGreater val first then minimum first : betterThan (minimum first) rest
-                                  else betterThan val rest
+    if first `optimizedGreater` val
+        then firstApprox : betterThan firstApprox rest
+        else betterThan val rest
+    where firstApprox = minimum first
 
-worseThan :: Double -> [ApproxDown] -> ApproxUp
-worseThan val (first : rest) = [val]
+worseThan :: Int -> [ApproxUp] -> ApproxDown
 worseThan val [] = []
+worseThan val (first : rest) =
+    if first `optimizedSmaller` val
+        then firstApprox : worseThan firstApprox rest
+        else worseThan val rest
+    where  firstApprox = maximum first
 
 -- Approximate a maximum in a list of approximated values (decreasing lists, truer value in tail).
 approxMax :: [ApproxDown] -> ApproxUp
-approxMax (first : rest) = minimum first : betterThan (minimum first) rest
+approxMax (first : rest) = firstApprox : betterThan firstApprox rest
+    where firstApprox = minimum first
 
 -- Approximate a minimum in a list of approximated values (increasing lists, truer value in tail).
 approxMin :: [ApproxUp] -> ApproxDown
-approxMin (first : rest) = maximum first : worseThan (maximum first) rest
+approxMin (first : rest) = firstApprox : worseThan firstApprox rest
+    where firstApprox = maximum first

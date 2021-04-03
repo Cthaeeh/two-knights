@@ -4,20 +4,20 @@ module StaticEval where
 import ChessData
 
 -- TODO add piece square tables.
-staticEval :: Board -> Double
+staticEval :: Board -> Int
 staticEval b = sum (map squareValue (concat b))
 
-squareValue :: Square -> Double
+squareValue :: Square -> Int
 squareValue s = case s of
     Empty -> 0
     Full (Piece White p) -> pieceValue p
     Full (Piece Black p) -> negate (pieceValue p)
 
-pieceValue :: PType -> Double
+pieceValue :: PType -> Int
 pieceValue p = case p of
-        Pawn -> 1
-        Knight -> 3
-        Bishop -> 3.3
-        Rook -> 5
-        Queen -> 9
-        King -> 1000
+        Pawn -> 100
+        Knight -> 300
+        Bishop -> 330
+        Rook -> 500
+        Queen -> 900
+        King -> 100000
